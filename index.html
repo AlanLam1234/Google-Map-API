@@ -1,0 +1,109 @@
+  <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>  <!-- Web title -->
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.js"></script>
+ <!--	<script src="jquery-3.3.1.js"></script>
+		<script src="jquery.csv.js"></script>  <!-- Stored relevant files with index.html -->
+</head>
+
+<body>
+<div id="page-wrapper">
+  <!--<h1>Testing</h1>-->  <!-- Heading -->
+  <div>
+    Import a CSV file:
+  </div>
+  <pre id="fileDisplayArea"></pre>
+</div>
+	<div id="inputs" class="clearfix">
+    <input type="file" id="files" name="files[]" multiple />
+	</div>
+	<div id="map" style="width:100%;height:500px"></div>  <!--Map size-->
+
+<script>
+
+var map;
+
+	function myMap() {
+		var myCenter = new google.maps.LatLng(22.380,114.11581);  //HK
+		//var myCenter = new google.maps.LatLng(22.32252254,114.2062133);  //KBY
+		var mapCanvas = document.getElementById("map");
+		var mapOptions = {
+			center: myCenter,
+			zoom: 11, //17 for KBY
+		  /*panControl: true,
+			zoomControl: true,
+			zoomControlOptions: {
+			style: google.maps.ZoomControlStyle.LARGE
+			},
+			mapTypeControl: true,
+			scaleControl: true,
+			streetViewControl: true,
+			overviewMapControl: true,
+			rotateControl: true  */  //Google map panel config.
+			};
+		map = new google.maps.Map(mapCanvas, mapOptions);
+	}
+
+	$('#files').bind('change', handleFileSelect);
+    function handleFileSelect(evt) {  //FileList object
+		var files = evt.target.files; 
+		var file = files[0];
+		var output = ''
+			output += '<span style="font-weight:bold;">' + escape(file.name) + '</span><br />\n';
+			printTable(file);
+			$('#list').append(output);  //Print the file contents
+    }
+
+    function printTable(file) {
+		var reader = new FileReader();
+		reader.readAsText(file);
+		reader.onload = function(event){
+			var csv = event.target.result;
+			var data = $.csv.toArrays(csv);
+			var html = '';
+			for(var row in data) {  //startLoop
+				html += '<tr>\r\n';
+				//console.log(data[row][2],data[row][3],data[row][4]);  //checking in console 
+				marker = new google.maps.Marker({
+				position: new google.maps.LatLng(parseFloat(data[row][3]), parseFloat(data[row][4])),  //Marker Lat(col3) Long(col4)
+				label: data[row][0]+":"+"\n"+data[row][6],  //Label(col0) with Valve ID(col6)
+				map: map
+			});	  
+		
+			addInfoWindow(marker, data[row][6]);  //Add infoWindow(col6)
+	 
+			for(var item in data[row]) {
+				html += '<td>' + data[row][item] + '</td>\r\n';
+			}
+				html += '</tr>\r\n';
+			}//endloop
+			$('#contents').html(html);
+		};
+	}
+
+	function addInfoWindow(marker, message) {  //infoWindow
+        var infoWindow = new google.maps.InfoWindow({
+        content: message
+        });
+        google.maps.event.addListener(marker, 'click', function () {
+        infoWindow.open(map, marker);
+        });
+    }
+
+  </script>
+
+  <hr />
+  <output id="list">
+  </output>
+  <hr />
+  <table id="contents" style="width:100%; height:400px;" border>
+  </table>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1XNXbcJP74X9l4y1qHwaayimmVZgmyes&callback=myMap"></script> <!-- Google API key -->
+</body>
+</html>
